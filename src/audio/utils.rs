@@ -60,11 +60,10 @@ pub fn detect_silence(samples: &[f32], threshold: f32) -> bool {
 }
 
 /// Apply a simple noise gate to audio samples
-pub fn apply_noise_gate(samples: &mut [f32], threshold: f32, ratio: f32) {
+pub fn apply_noise_gate(samples: &mut [f32], threshold: f32) {
     for sample in samples.iter_mut() {
-        let amplitude = sample.abs();
-        if amplitude < threshold {
-            *sample *= ratio;
+        if sample.abs() < threshold {
+            *sample = 0.0;
         }
     }
 }

@@ -90,7 +90,7 @@ pub fn get_audio_devices() -> Result<Vec<AudioDevice>> {
     }
     
     // Mark default device
-    if let Ok(default_device) = host.default_input_device() {
+    if let Some(default_device) = host.default_input_device() {
         if let Ok(default_name) = default_device.name() {
             for device in &mut devices {
                 if device.name == default_name {

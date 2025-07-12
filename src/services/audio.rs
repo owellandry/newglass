@@ -2,7 +2,8 @@ use anyhow::Result;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{Device, Host, Stream, StreamConfig};
 use std::sync::Arc;
-use tokio::sync::{broadcast, mpsc, Mutex, RwLock};
+use tokio::sync::{broadcast, mpsc, RwLock};
+use std::sync::Mutex;
 use tracing::{info, warn, error};
 use uuid::Uuid;
 
@@ -24,6 +25,12 @@ pub struct AudioService {
     audio_tx: mpsc::Sender<AudioData>,
     audio_rx: Arc<Mutex<Option<mpsc::Receiver<AudioData>>>>,
 }
+
+// cpal::Stream is not Send/Sync on all platforms. For our usage the audio
+// streams stay on a single thread, so it's safe to mark the service as Send
+// and Sync.
+unsafe impl Send for AudioService {}
+unsafe impl Sync for AudioService {}
 
 #[derive(Debug, Clone)]
 struct AudioData {
@@ -55,7 +62,7 @@ impl AudioService {
         info!("Starting audio service...");
         
         // Start audio processing loop
-        let mut audio_rx = self.audio_rx.lock().await.take()
+        let mut audio_rx = self.audio_rx.lock().unwrap().take()
             .ok_or_else(|| anyhow::anyhow!("Audio receiver already taken"))?;
         
         let event_tx = self.event_tx.clone();
@@ -100,11 +107,11 @@ impl AudioService {
         info!("Stopping audio recording");
         
         // Stop streams
-        if let Some(stream) = self.microphone_stream.lock().await.take() {
+        if let Some(stream) = self.microphone_stream.lock().unwrap().take() {
             drop(stream);
         }
 
-        if let Some(stream) = self.system_audio_stream.lock().await.take() {
+        if let Some(stream) = self.system_audio_stream.lock().unwrap().take() {
             drop(stream);
         }
         
@@ -121,7 +128,8 @@ impl AudioService {
         
         let config = self.get_stream_config(&device)?;
         let audio_tx = self.audio_tx.clone();
-        
+        let mut guard = self.microphone_stream.lock().unwrap();
+
         let stream = device.build_input_stream(
             &config,
             move |data: &[f32], _: &cpal::InputCallbackInfo| {
@@ -141,7 +149,7 @@ impl AudioService {
         )?;
         
         stream.play()?;
-        *self.microphone_stream.lock().await = Some(stream);
+        *guard = Some(stream);
         
         info!("Microphone recording started");
         Ok(())
