@@ -34,6 +34,11 @@ pub fn calculate_duration(sample_count: usize, sample_rate: u32, channels: u16) 
     Duration::from_secs_f64(seconds)
 }
 
+/// Backwards-compatible helper alias
+pub fn samples_to_duration(sample_count: usize, sample_rate: u32, channels: u16) -> Duration {
+    calculate_duration(sample_count, sample_rate, channels)
+}
+
 /// Calculate RMS (Root Mean Square) of audio samples
 pub fn calculate_rms(samples: &[f32]) -> f32 {
     if samples.is_empty() {

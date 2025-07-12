@@ -5,7 +5,7 @@ pub mod handlers;
 
 use anyhow::Result;
 use axum::{
-    routing::{get, post},
+    routing::{get, post, put},
     Router,
 };
 use std::sync::Arc;
@@ -150,7 +150,7 @@ async fn health_check() -> &'static str {
 
 // Dashboard handler
 async fn serve_dashboard() -> axum::response::Html<&'static str> {
-    axum::response::Html(include_str!("../../../web/index.html"))
+    axum::response::Html(include_str!("../../web/index.html"))
 }
 
 // Static files handler
