@@ -15,6 +15,7 @@ use crate::repositories::{
     message::{Message, MessageRole},
     transcript::{AudioSource, Transcript},
 };
+use crate::repositories::Repository;
 
 // Request/Response types
 #[derive(Debug, Deserialize)]

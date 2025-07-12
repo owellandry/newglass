@@ -2,7 +2,7 @@ use anyhow::Result;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{Device, Host, Stream, StreamConfig};
 use std::sync::Arc;
-use tokio::sync::{broadcast, mpsc, RwLock};
+use tokio::sync::{broadcast, mpsc, Mutex, RwLock};
 use tracing::{info, warn, error};
 use uuid::Uuid;
 
@@ -14,15 +14,15 @@ pub struct AudioService {
     event_tx: broadcast::Sender<AppEvent>,
     
     // Audio streams
-    microphone_stream: Arc<RwLock<Option<Stream>>>,
-    system_audio_stream: Arc<RwLock<Option<Stream>>>,
+    microphone_stream: Arc<Mutex<Option<Stream>>>,
+    system_audio_stream: Arc<Mutex<Option<Stream>>>,
     
     // Current session
     current_session: Arc<RwLock<Option<Uuid>>>,
     
     // Audio processing
     audio_tx: mpsc::Sender<AudioData>,
-    audio_rx: Arc<RwLock<Option<mpsc::Receiver<AudioData>>>>,
+    audio_rx: Arc<Mutex<Option<mpsc::Receiver<AudioData>>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -43,11 +43,11 @@ impl AudioService {
         Ok(Self {
             config,
             event_tx,
-            microphone_stream: Arc::new(RwLock::new(None)),
-            system_audio_stream: Arc::new(RwLock::new(None)),
+            microphone_stream: Arc::new(Mutex::new(None)),
+            system_audio_stream: Arc::new(Mutex::new(None)),
             current_session: Arc::new(RwLock::new(None)),
             audio_tx,
-            audio_rx: Arc::new(RwLock::new(Some(audio_rx))),
+            audio_rx: Arc::new(Mutex::new(Some(audio_rx))),
         })
     }
     
@@ -55,7 +55,7 @@ impl AudioService {
         info!("Starting audio service...");
         
         // Start audio processing loop
-        let mut audio_rx = self.audio_rx.write().await.take()
+        let mut audio_rx = self.audio_rx.lock().await.take()
             .ok_or_else(|| anyhow::anyhow!("Audio receiver already taken"))?;
         
         let event_tx = self.event_tx.clone();
@@ -100,11 +100,11 @@ impl AudioService {
         info!("Stopping audio recording");
         
         // Stop streams
-        if let Some(stream) = self.microphone_stream.write().await.take() {
+        if let Some(stream) = self.microphone_stream.lock().await.take() {
             drop(stream);
         }
-        
-        if let Some(stream) = self.system_audio_stream.write().await.take() {
+
+        if let Some(stream) = self.system_audio_stream.lock().await.take() {
             drop(stream);
         }
         
@@ -141,7 +141,7 @@ impl AudioService {
         )?;
         
         stream.play()?;
-        *self.microphone_stream.write().await = Some(stream);
+        *self.microphone_stream.lock().await = Some(stream);
         
         info!("Microphone recording started");
         Ok(())

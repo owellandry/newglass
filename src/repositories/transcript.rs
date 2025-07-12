@@ -111,7 +111,7 @@ impl TranscriptRepository {
             "SELECT * FROM transcripts WHERE session_id = ? ORDER BY created_at ASC"
         )
         .bind(session_id.to_string())
-        .fetch_all(&**self.pool)
+        .fetch_all(&*self.pool)
         .await?;
         
         let mut transcripts = Vec::new();
@@ -132,7 +132,7 @@ impl TranscriptRepository {
         )
         .bind(session_id.to_string())
         .bind(audio_source.to_string())
-        .fetch_all(&**self.pool)
+        .fetch_all(&*self.pool)
         .await?;
         
         let mut transcripts = Vec::new();
@@ -148,7 +148,7 @@ impl TranscriptRepository {
             "SELECT * FROM transcripts ORDER BY created_at DESC LIMIT ?"
         )
         .bind(limit)
-        .fetch_all(&**self.pool)
+        .fetch_all(&*self.pool)
         .await?;
         
         let mut transcripts = Vec::new();
@@ -164,7 +164,7 @@ impl TranscriptRepository {
             "SELECT * FROM transcripts WHERE speaker = ? ORDER BY created_at DESC"
         )
         .bind(speaker)
-        .fetch_all(&**self.pool)
+        .fetch_all(&*self.pool)
         .await?;
         
         let mut transcripts = Vec::new();
@@ -181,7 +181,7 @@ impl TranscriptRepository {
             "SELECT * FROM transcripts WHERE text LIKE ? ORDER BY created_at DESC"
         )
         .bind(search_query)
-        .fetch_all(&**self.pool)
+        .fetch_all(&*self.pool)
         .await?;
         
         let mut transcripts = Vec::new();
@@ -205,7 +205,7 @@ impl TranscriptRepository {
             "#
         )
         .bind(session_id.to_string())
-        .fetch_one(&**self.pool)
+        .fetch_one(&*self.pool)
         .await?;
         
         Ok(TranscriptStats {
@@ -223,7 +223,7 @@ impl TranscriptRepository {
             "DELETE FROM transcripts WHERE created_at < ?"
         )
         .bind(cutoff_date)
-        .execute(&**self.pool)
+        .execute(&*self.pool)
         .await?;
         
         Ok(result.rows_affected())
@@ -234,7 +234,7 @@ impl TranscriptRepository {
             "SELECT * FROM transcripts WHERE session_id = ? ORDER BY created_at ASC"
         )
         .bind(session_id.to_string())
-        .fetch_all(&**self.pool)
+        .fetch_all(&*self.pool)
         .await?;
         
         let mut turns = Vec::new();
@@ -296,7 +296,7 @@ impl Repository for TranscriptRepository {
         .bind(&entity.created_at)
         .bind(&entity.audio_duration)
         .bind(&entity.word_count)
-        .execute(&**self.pool)
+        .execute(&*self.pool)
         .await?;
         
         Ok(transcript.id)
@@ -307,7 +307,7 @@ impl Repository for TranscriptRepository {
             "SELECT * FROM transcripts WHERE id = ?"
         )
         .bind(id.to_string())
-        .fetch_optional(&**self.pool)
+        .fetch_optional(&*self.pool)
         .await?;
         
         match entity {
@@ -335,7 +335,7 @@ impl Repository for TranscriptRepository {
         .bind(&entity.audio_duration)
         .bind(&entity.word_count)
         .bind(&entity.id)
-        .execute(&**self.pool)
+        .execute(&*self.pool)
         .await?;
         
         Ok(())
@@ -344,7 +344,7 @@ impl Repository for TranscriptRepository {
     async fn delete(&self, id: &Uuid) -> Result<()> {
         sqlx::query("DELETE FROM transcripts WHERE id = ?")
             .bind(id.to_string())
-            .execute(&**self.pool)
+            .execute(&*self.pool)
             .await?;
         
         Ok(())

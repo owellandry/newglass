@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tokio::sync::broadcast;
 use tracing::{info, error};
 
-use crate::config::AppConfig;
+use crate::config::Config;
 use crate::services::{
     audio::AudioService,
     stt::SttService,
@@ -15,11 +15,11 @@ use crate::repositories::{
     transcript::TranscriptRepository,
     message::MessageRepository,
 };
-use crate::api::server::ApiServer;
+use crate::api::ApiServer;
 use crate::core::events::AppEvent;
 
 pub struct App {
-    config: AppConfig,
+    config: Config,
     event_tx: broadcast::Sender<AppEvent>,
     
     // Services
@@ -38,7 +38,7 @@ pub struct App {
 }
 
 impl App {
-    pub async fn new(config: AppConfig) -> Result<Self> {
+    pub async fn new(config: Config) -> Result<Self> {
         // Validate configuration
         config.validate()?;
         
@@ -46,7 +46,7 @@ impl App {
         let (event_tx, _) = broadcast::channel(1000);
         
         // Initialize database
-        let db_pool = crate::repositories::database::init_database(&config.database).await?;
+        let db_pool = crate::repositories::initialize_database(&config.database.url).await?;
         
         // Initialize repositories
         let session_repo = Arc::new(SessionRepository::new(db_pool.clone()));

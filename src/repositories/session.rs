@@ -77,7 +77,7 @@ impl SessionRepository {
             "SELECT * FROM sessions WHERE user_id = ? ORDER BY created_at DESC"
         )
         .bind(user_id)
-        .fetch_all(&**self.pool)
+        .fetch_all(&*self.pool)
         .await?;
         
         let mut sessions = Vec::new();
@@ -93,7 +93,7 @@ impl SessionRepository {
             "SELECT * FROM sessions WHERE status = ? ORDER BY updated_at DESC"
         )
         .bind(SessionStatus::Active.to_string())
-        .fetch_all(&**self.pool)
+        .fetch_all(&*self.pool)
         .await?;
         
         let mut sessions = Vec::new();
@@ -109,7 +109,7 @@ impl SessionRepository {
             "SELECT * FROM sessions WHERE session_type = ? ORDER BY created_at DESC"
         )
         .bind(session_type.to_string())
-        .fetch_all(&**self.pool)
+        .fetch_all(&*self.pool)
         .await?;
         
         let mut sessions = Vec::new();
@@ -127,7 +127,7 @@ impl SessionRepository {
         .bind(status.to_string())
         .bind(Utc::now())
         .bind(id.to_string())
-        .execute(&**self.pool)
+        .execute(&*self.pool)
         .await?;
         
         Ok(())
@@ -142,7 +142,7 @@ impl SessionRepository {
         .bind(metadata_json)
         .bind(Utc::now())
         .bind(id.to_string())
-        .execute(&**self.pool)
+        .execute(&*self.pool)
         .await?;
         
         Ok(())
@@ -156,7 +156,7 @@ impl SessionRepository {
         )
         .bind(cutoff_date)
         .bind(SessionStatus::Active.to_string())
-        .execute(&**self.pool)
+        .execute(&*self.pool)
         .await?;
         
         Ok(result.rows_affected())
@@ -167,7 +167,7 @@ impl SessionRepository {
             "SELECT COUNT(*) as count FROM sessions WHERE status = ?"
         )
         .bind(status.to_string())
-        .fetch_one(&**self.pool)
+        .fetch_one(&*self.pool)
         .await?;
         
         Ok(row.get("count"))
@@ -177,7 +177,7 @@ impl SessionRepository {
         let rows = sqlx::query(
             "SELECT status, COUNT(*) as count FROM sessions GROUP BY status"
         )
-        .fetch_all(&**self.pool)
+        .fetch_all(&*self.pool)
         .await?;
         
         let mut stats = HashMap::new();
@@ -211,7 +211,7 @@ impl Repository for SessionRepository {
         .bind(&entity.created_at)
         .bind(&entity.updated_at)
         .bind(&entity.metadata)
-        .execute(&**self.pool)
+        .execute(&*self.pool)
         .await?;
         
         Ok(session.id)
@@ -222,7 +222,7 @@ impl Repository for SessionRepository {
             "SELECT * FROM sessions WHERE id = ?"
         )
         .bind(id.to_string())
-        .fetch_optional(&**self.pool)
+        .fetch_optional(&*self.pool)
         .await?;
         
         match entity {
@@ -247,7 +247,7 @@ impl Repository for SessionRepository {
         .bind(Utc::now())
         .bind(&entity.metadata)
         .bind(&entity.id)
-        .execute(&**self.pool)
+        .execute(&*self.pool)
         .await?;
         
         Ok(())
@@ -256,7 +256,7 @@ impl Repository for SessionRepository {
     async fn delete(&self, id: &Uuid) -> Result<()> {
         sqlx::query("DELETE FROM sessions WHERE id = ?")
             .bind(id.to_string())
-            .execute(&**self.pool)
+            .execute(&*self.pool)
             .await?;
         
         Ok(())

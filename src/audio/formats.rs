@@ -246,7 +246,7 @@ impl AudioConverter {
             for ch in 0..channels as usize {
                 let sample_idx = src_frame_int * channels as usize + ch;
                 
-                if sample_idx + channels as usize < samples.len() {
+                if sample_idx + (channels as usize) < samples.len() {
                     // Linear interpolation
                     let sample1 = samples[sample_idx];
                     let sample2 = samples[sample_idx + channels as usize];

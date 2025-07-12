@@ -139,7 +139,7 @@ impl MessageRepository {
             "SELECT * FROM messages WHERE session_id = ? ORDER BY created_at ASC"
         )
         .bind(session_id.to_string())
-        .fetch_all(&**self.pool)
+        .fetch_all(&*self.pool)
         .await?;
         
         let mut messages = Vec::new();
@@ -168,7 +168,7 @@ impl MessageRepository {
             .bind(session_id.to_string())
         };
         
-        let entities = query.fetch_all(&**self.pool).await?;
+        let entities = query.fetch_all(&*self.pool).await?;
         
         let mut messages = Vec::new();
         for entity in entities {
@@ -186,7 +186,7 @@ impl MessageRepository {
         )
         .bind(session_id.to_string())
         .bind(role.to_string())
-        .fetch_all(&**self.pool)
+        .fetch_all(&*self.pool)
         .await?;
         
         let mut messages = Vec::new();
@@ -204,7 +204,7 @@ impl MessageRepository {
         )
         .bind(session_id.to_string())
         .bind(search_query)
-        .fetch_all(&**self.pool)
+        .fetch_all(&*self.pool)
         .await?;
         
         let mut messages = Vec::new();
@@ -229,7 +229,7 @@ impl MessageRepository {
             "#
         )
         .bind(session_id.to_string())
-        .fetch_one(&**self.pool)
+        .fetch_one(&*self.pool)
         .await?;
         
         Ok(MessageStats {
@@ -255,7 +255,7 @@ impl MessageRepository {
             ORDER BY usage_count DESC
             "#
         )
-        .fetch_all(&**self.pool)
+        .fetch_all(&*self.pool)
         .await?;
         
         let mut stats = Vec::new();
@@ -276,7 +276,7 @@ impl MessageRepository {
             "UPDATE messages SET is_edited = true, edit_count = edit_count + 1 WHERE id = ?"
         )
         .bind(id.to_string())
-        .execute(&**self.pool)
+        .execute(&*self.pool)
         .await?;
         
         Ok(())
@@ -288,7 +288,7 @@ impl MessageRepository {
         )
         .bind(new_content)
         .bind(id.to_string())
-        .execute(&**self.pool)
+        .execute(&*self.pool)
         .await?;
         
         Ok(())
@@ -299,7 +299,7 @@ impl MessageRepository {
             "DELETE FROM messages WHERE session_id = ?"
         )
         .bind(session_id.to_string())
-        .execute(&**self.pool)
+        .execute(&*self.pool)
         .await?;
         
         Ok(result.rows_affected())
@@ -312,7 +312,7 @@ impl MessageRepository {
             "DELETE FROM messages WHERE created_at < ?"
         )
         .bind(cutoff_date)
-        .execute(&**self.pool)
+        .execute(&*self.pool)
         .await?;
         
         Ok(result.rows_affected())
@@ -323,7 +323,7 @@ impl MessageRepository {
             "SELECT * FROM messages ORDER BY created_at DESC LIMIT ?"
         )
         .bind(limit)
-        .fetch_all(&**self.pool)
+        .fetch_all(&*self.pool)
         .await?;
         
         let mut messages = Vec::new();
@@ -380,7 +380,7 @@ impl Repository for MessageRepository {
         .bind(&entity.parent_message_id)
         .bind(&entity.is_edited)
         .bind(&entity.edit_count)
-        .execute(&**self.pool)
+        .execute(&*self.pool)
         .await?;
         
         Ok(message.id)
@@ -391,7 +391,7 @@ impl Repository for MessageRepository {
             "SELECT * FROM messages WHERE id = ?"
         )
         .bind(id.to_string())
-        .fetch_optional(&**self.pool)
+        .fetch_optional(&*self.pool)
         .await?;
         
         match entity {
@@ -421,7 +421,7 @@ impl Repository for MessageRepository {
         .bind(&entity.is_edited)
         .bind(&entity.edit_count)
         .bind(&entity.id)
-        .execute(&**self.pool)
+        .execute(&*self.pool)
         .await?;
         
         Ok(())
@@ -430,7 +430,7 @@ impl Repository for MessageRepository {
     async fn delete(&self, id: &Uuid) -> Result<()> {
         sqlx::query("DELETE FROM messages WHERE id = ?")
             .bind(id.to_string())
-            .execute(&**self.pool)
+            .execute(&*self.pool)
             .await?;
         
         Ok(())

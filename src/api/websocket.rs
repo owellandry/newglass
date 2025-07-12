@@ -132,11 +132,11 @@ impl WebSocketManager {
                             service,
                         }
                     },
-                    AppEvent::ServiceStatusUpdate { service, status, details } => {
+                    AppEvent::StatusUpdate { service, status } => {
                         WsMessage::ServiceStatusUpdate {
                             service,
-                            status,
-                            details,
+                            status: format!("{:?}", status),
+                            details: None,
                         }
                     },
                     _ => continue,
@@ -329,14 +329,9 @@ async fn handle_websocket_message(
             if let Err(e) = state.audio_service.start_recording(session_id).await {
                 error!("Failed to start audio recording: {}", e);
             } else {
-                let event = AppEvent::ServiceStatusUpdate {
+                let event = AppEvent::StatusUpdate {
                     service: "audio".to_string(),
-                    status: "recording".to_string(),
-                    details: Some({
-                        let mut details = HashMap::new();
-                        details.insert("session_id".to_string(), serde_json::Value::String(session_id.to_string()));
-                        details
-                    }),
+                    status: crate::core::events::ServiceStatus::Running,
                 };
                 if let Err(e) = state.event_tx.send(event) {
                     error!("Failed to send audio status event: {}", e);
@@ -348,10 +343,9 @@ async fn handle_websocket_message(
             if let Err(e) = state.audio_service.stop_recording().await {
                 error!("Failed to stop audio recording: {}", e);
             } else {
-                let event = AppEvent::ServiceStatusUpdate {
+                let event = AppEvent::StatusUpdate {
                     service: "audio".to_string(),
-                    status: "stopped".to_string(),
-                    details: None,
+                    status: crate::core::events::ServiceStatus::Stopped,
                 };
                 if let Err(e) = state.event_tx.send(event) {
                     error!("Failed to send audio status event: {}", e);

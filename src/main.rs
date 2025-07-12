@@ -10,7 +10,7 @@ use clap::{Arg, Command};
 use std::env;
 use tokio;
 use tracing::{info, error, warn};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, Layer};
 
 use crate::config::Config;
 use crate::core::app::App;
