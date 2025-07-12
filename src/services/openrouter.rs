@@ -76,8 +76,12 @@ impl OpenRouterClient {
         max_tokens: Option<u32>,
         temperature: Option<f32>,
     ) -> Result<String> {
-        let api_key = self.config.api_key.as_ref()
-            .ok_or_else(|| anyhow::anyhow!("OpenRouter API key not configured"))?;
+        let api_key = {
+            if self.config.api_key.is_empty() {
+                return Err(anyhow::anyhow!("OpenRouter API key not configured"));
+            }
+            self.config.api_key.clone()
+        };
         
         let request = ChatRequest {
             model: model.to_string(),
@@ -98,10 +102,11 @@ impl OpenRouterClient {
             .await?;
         
         if !response.status().is_success() {
+            let status = response.status();
             let error_text = response.text().await?;
             return Err(anyhow::anyhow!(
-                "OpenRouter API error: {} - {}", 
-                response.status(), 
+                "OpenRouter API error: {} - {}",
+                status,
                 error_text
             ));
         }
@@ -127,14 +132,18 @@ impl OpenRouterClient {
         audio_data: &[u8],
         language: Option<&str>,
     ) -> Result<String> {
-        let api_key = self.config.api_key.as_ref()
-            .ok_or_else(|| anyhow::anyhow!("OpenRouter API key not configured"))?;
+        let api_key = {
+            if self.config.api_key.is_empty() {
+                return Err(anyhow::anyhow!("OpenRouter API key not configured"));
+            }
+            self.config.api_key.clone()
+        };
         
         // Convert audio to base64
         let audio_base64 = base64::encode(audio_data);
         
         let request = TranscriptionRequest {
-            model: self.config.stt_model.clone(),
+            model: self.config.transcription_model.clone(),
             file: audio_base64,
             language: language.map(|s| s.to_string()),
             response_format: Some("json".to_string()),
@@ -151,10 +160,11 @@ impl OpenRouterClient {
             .await?;
         
         if !response.status().is_success() {
+            let status = response.status();
             let error_text = response.text().await?;
             return Err(anyhow::anyhow!(
-                "OpenRouter transcription error: {} - {}", 
-                response.status(), 
+                "OpenRouter transcription error: {} - {}",
+                status,
                 error_text
             ));
         }
@@ -169,8 +179,12 @@ impl OpenRouterClient {
         messages: Vec<ChatMessage>,
         callback: impl Fn(String) -> Result<()>,
     ) -> Result<String> {
-        let api_key = self.config.api_key.as_ref()
-            .ok_or_else(|| anyhow::anyhow!("OpenRouter API key not configured"))?;
+        let api_key = {
+            if self.config.api_key.is_empty() {
+                return Err(anyhow::anyhow!("OpenRouter API key not configured"));
+            }
+            self.config.api_key.clone()
+        };
         
         let request = ChatRequest {
             model: model.to_string(),
@@ -191,10 +205,11 @@ impl OpenRouterClient {
             .await?;
         
         if !response.status().is_success() {
+            let status = response.status();
             let error_text = response.text().await?;
             return Err(anyhow::anyhow!(
-                "OpenRouter streaming error: {} - {}", 
-                response.status(), 
+                "OpenRouter streaming error: {} - {}",
+                status,
                 error_text
             ));
         }
@@ -241,10 +256,10 @@ impl OpenRouterClient {
     }
     
     pub fn get_default_stt_model(&self) -> &str {
-        &self.config.stt_model
+        &self.config.transcription_model
     }
-    
+
     pub fn get_default_summary_model(&self) -> &str {
-        &self.config.summary_model
+        &self.config.chat_model
     }
 }

@@ -100,7 +100,7 @@ impl AudioProcessor {
     }
     
     fn apply_noise_gate(&self, samples: &mut [f32]) {
-        crate::audio::utils::apply_noise_gate(samples, self.noise_gate_threshold);
+        crate::audio::utils::apply_noise_gate(samples, self.noise_gate_threshold, 0.5);
     }
     
     fn detect_voice_activity(&self, samples: &[f32]) -> bool {

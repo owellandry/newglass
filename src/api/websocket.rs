@@ -96,21 +96,21 @@ impl WebSocketManager {
                         // Don't broadcast raw audio data
                         continue;
                     },
-                    AppEvent::TranscriptionReceived { session_id, result } => {
+                    AppEvent::TranscriptionReceived { session_id, text, ref speaker, confidence } => {
                         WsMessage::TranscriptionReceived {
                             session_id,
-                            speaker: result.speaker,
-                            text: result.text,
-                            confidence: result.confidence,
-                            audio_source: result.audio_source,
+                            speaker: speaker.clone(),
+                            text,
+                            confidence: Some(confidence),
+                            audio_source: speaker.clone(),
                         }
                     },
-                    AppEvent::ChatMessageReceived { session_id, message } => {
+                    AppEvent::ChatResponseReceived { session_id, response } => {
                         WsMessage::MessageReceived {
                             session_id,
-                            role: message.role,
-                            content: message.content,
-                            model: message.model,
+                            role: "assistant".to_string(),
+                            content: response,
+                            model: None,
                         }
                     },
                     AppEvent::SummaryGenerated { session_id, summary } => {
@@ -189,7 +189,7 @@ async fn handle_websocket(socket: WebSocket, state: AppState) {
     let connection_id = Uuid::new_v4();
     info!("New WebSocket connection: {}", connection_id);
     
-    let (mut sender, mut receiver) = socket.split();
+    let (mut sender, receiver) = socket.split();
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<WsMessage>();
     
     let connection = WebSocketConnection {
@@ -230,6 +230,9 @@ async fn handle_websocket(socket: WebSocket, state: AppState) {
                 },
                 Ok(Message::Binary(_)) => {
                     warn!("Received binary WebSocket message, ignoring");
+                },
+                Ok(Message::Ping(_)) | Ok(Message::Pong(_)) => {
+                    // Ignore ping/pong frames
                 },
                 Ok(Message::Close(_)) => {
                     info!("WebSocket connection {} closed by client", connection_id);

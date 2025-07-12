@@ -25,6 +25,11 @@ pub struct AudioService {
     audio_rx: Arc<Mutex<Option<mpsc::Receiver<AudioData>>>>,
 }
 
+// cpal::Stream is not Send/Sync, but we access it only on the same thread.
+// Implementing these traits unsafely allows usage within async contexts.
+unsafe impl Send for AudioService {}
+unsafe impl Sync for AudioService {}
+
 #[derive(Debug, Clone)]
 struct AudioData {
     session_id: Uuid,

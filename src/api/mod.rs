@@ -41,6 +41,7 @@ pub struct AppState {
 }
 
 /// API Server that handles HTTP and WebSocket connections
+#[derive(Clone)]
 pub struct ApiServer {
     app_state: AppState,
     config: ServerConfig,
@@ -90,7 +91,7 @@ impl ApiServer {
         Ok(())
     }
     
-    fn create_router(self) -> Router {
+    fn create_router(&self) -> Router {
         let cors = CorsLayer::new()
             .allow_origin(Any)
             .allow_methods(Any)
@@ -139,7 +140,7 @@ impl ApiServer {
                     .layer(TraceLayer::new_for_http())
                     .layer(cors)
             )
-            .with_state(self.app_state)
+            .with_state(self.app_state.clone())
     }
 }
 

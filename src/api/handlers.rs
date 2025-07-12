@@ -1,4 +1,3 @@
-use anyhow::Result;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
