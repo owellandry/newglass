@@ -40,7 +40,6 @@ pub enum WsMessage {
         speaker: String,
         text: String,
         confidence: Option<f32>,
-        audio_source: String,
     },
     MessageReceived {
         session_id: Uuid,
@@ -96,21 +95,28 @@ impl WebSocketManager {
                         // Don't broadcast raw audio data
                         continue;
                     },
-                    AppEvent::TranscriptionReceived { session_id, result } => {
+                    AppEvent::TranscriptionReceived { session_id, text, speaker, confidence } => {
                         WsMessage::TranscriptionReceived {
                             session_id,
-                            speaker: result.speaker,
-                            text: result.text,
-                            confidence: result.confidence,
-                            audio_source: result.audio_source,
+                            speaker,
+                            text,
+                            confidence: Some(confidence),
                         }
                     },
-                    AppEvent::ChatMessageReceived { session_id, message } => {
+                    AppEvent::ChatMessageSent { session_id, message } => {
                         WsMessage::MessageReceived {
                             session_id,
-                            role: message.role,
-                            content: message.content,
-                            model: message.model,
+                            role: "user".to_string(),
+                            content: message,
+                            model: None,
+                        }
+                    },
+                    AppEvent::ChatResponseReceived { session_id, response } => {
+                        WsMessage::MessageReceived {
+                            session_id,
+                            role: "assistant".to_string(),
+                            content: response,
+                            model: None,
                         }
                     },
                     AppEvent::SummaryGenerated { session_id, summary } => {
@@ -202,8 +208,8 @@ async fn handle_websocket(socket: WebSocket, state: AppState) {
     let ws_manager = WebSocketManager::new(state.event_tx.subscribe());
     ws_manager.add_connection(connection).await;
     
-    // Spawn task to handle outgoing messages
-    let outgoing_task = tokio::spawn(async move {
+    // Task to handle outgoing messages
+    let outgoing_task = async move {
         while let Some(msg) = rx.recv().await {
             let json_msg = match serde_json::to_string(&msg) {
                 Ok(json) => json,
@@ -217,10 +223,10 @@ async fn handle_websocket(socket: WebSocket, state: AppState) {
                 break;
             }
         }
-    });
+    };
     
-    // Handle incoming messages
-    let incoming_task = tokio::spawn(async move {
+    // Task to handle incoming messages
+    let incoming_task = async move {
         while let Some(msg) = receiver.next().await {
             match msg {
                 Ok(Message::Text(text)) => {
@@ -235,6 +241,9 @@ async fn handle_websocket(socket: WebSocket, state: AppState) {
                     info!("WebSocket connection {} closed by client", connection_id);
                     break;
                 },
+                Ok(Message::Ping(_)) | Ok(Message::Pong(_)) => {
+                    // ignore ping/pong as tungstenite handles them
+                },
                 Err(e) => {
                     error!("WebSocket error for connection {}: {}", connection_id, e);
                     break;
@@ -245,7 +254,7 @@ async fn handle_websocket(socket: WebSocket, state: AppState) {
         // Clean up connection
         ws_manager.remove_connection(connection_id).await;
         info!("WebSocket connection {} cleaned up", connection_id);
-    });
+    };
     
     // Wait for either task to complete
     tokio::select! {

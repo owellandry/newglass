@@ -78,7 +78,7 @@ impl ApiServer {
         }
     }
     
-    pub async fn run(self) -> Result<()> {
+    pub async fn run(&self) -> Result<()> {
         let app = self.create_router();
         
         let addr = format!("{}:{}", self.config.host, self.config.port);
@@ -90,7 +90,7 @@ impl ApiServer {
         Ok(())
     }
     
-    fn create_router(self) -> Router {
+    fn create_router(&self) -> Router {
         let cors = CorsLayer::new()
             .allow_origin(Any)
             .allow_methods(Any)
@@ -139,7 +139,7 @@ impl ApiServer {
                     .layer(TraceLayer::new_for_http())
                     .layer(cors)
             )
-            .with_state(self.app_state)
+            .with_state(self.app_state.clone())
     }
 }
 
