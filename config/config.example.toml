@@ -1,0 +1,80 @@
+# NewGlass Configuration Example
+# Copy this file to config.toml and customize as needed
+
+[database]
+url = "sqlite:./data/newglass.db"
+max_connections = 10
+connection_timeout = 30
+auto_migrate = true
+
+[audio]
+sample_rate = 44100
+channels = 2
+buffer_size = 1024
+input_device = null  # null for default device
+output_device = null  # null for default device
+noise_gate_threshold = 0.01
+voice_activity_threshold = 0.02
+auto_gain_control = true
+echo_cancellation = true
+
+[openrouter]
+api_key = ""  # Set via OPENROUTER_API_KEY environment variable
+base_url = "https://openrouter.ai/api/v1"
+chat_model = "anthropic/claude-3.5-sonnet"
+transcription_model = "openai/whisper-large-v3"
+max_tokens = 4096
+temperature = 0.7
+timeout = 60
+retry_attempts = 3
+retry_delay = 1000
+
+[server]
+host = "127.0.0.1"
+port = 3000
+cors_origins = ["http://localhost:3000"]
+max_request_size = 10485760  # 10MB
+request_timeout = 30
+websocket_ping_interval = 30
+rate_limit_requests = 100
+rate_limit_window = 60
+
+[logging]
+level = "info"
+file_path = "./logs/newglass.log"
+max_file_size = 10485760  # 10MB
+max_files = 5
+console_output = true
+json_format = false
+
+[session]
+default_timeout = 3600  # 1 hour
+max_sessions_per_user = 10
+cleanup_interval = 300  # 5 minutes
+auto_save_interval = 60  # 1 minute
+session_history_limit = 1000
+
+[transcription]
+buffer_duration = 3000  # 3 seconds
+min_audio_length = 1000  # 1 second
+silence_threshold = 0.01
+language = null  # null for auto-detect
+auto_detect_language = true
+enable_timestamps = true
+enable_word_timestamps = false
+
+[chat]
+max_history_length = 50
+context_window = 4000
+system_prompt = null  # null for default
+enable_streaming = true
+response_timeout = 30
+auto_summarize_threshold = 20
+
+[summary]
+auto_generate = true
+trigger_threshold = 10
+analysis_interval = 300  # 5 minutes
+max_summary_length = 500
+include_sentiment = true
+include_topics = true
